@@ -25,3 +25,5 @@ VistualCall.trace do
   call_a
 end
 ```
+
+![vistual_call_result](./example/vistual_call_result.png)
