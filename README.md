@@ -44,6 +44,10 @@ end
 
 The method after each node is call order number. This will help your understand the order of the function call.
 
+#### Sinatra
+
+![sinatra](./example/sinatra.png)
+
 ## 3. More information
 
 ## configuration
