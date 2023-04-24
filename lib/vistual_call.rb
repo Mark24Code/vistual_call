@@ -4,8 +4,8 @@ require_relative "vistual_call/version"
 require_relative "./vistual_call/graph"
 
 module VistualCall
-  class Error < StandardError; end
-  # Your code goes here...
+  class Error < StandardError
+  end
 
   class << self
     def trace(options = {})
@@ -15,9 +15,8 @@ module VistualCall
       end
 
       proxy = ::VistualCall::Graph.new(options)
-      proxy.track { yield}
+      proxy.track { yield }
       proxy.output
     end
   end
 end
-

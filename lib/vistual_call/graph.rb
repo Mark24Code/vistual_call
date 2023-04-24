@@ -9,20 +9,15 @@ module VistualCall
       @show_dot = options[:show_dot] || false
       @direction = options[:direction] || "LR"
 
-      @default_config = {
-        fontname:"wqy-microhei",
-        fontcolor: "black"
-      }
+      @default_config = { fontname: "wqy-microhei", fontcolor: "black" }
 
-      @global_node_attributes = options[:global_node_attributes] || @default_config
-      @global_edge_attributes = options[:global_edge_attributes] || @default_config
+      @global_node_attributes =
+        options[:global_node_attributes] || @default_config
+      @global_edge_attributes =
+        options[:global_edge_attributes] || @default_config
 
-      @default_node_config = {
-        shape: "box",
-        style: "rounded",
-        peripheries: 1
-      }
-      @node_attributes = options[:node_attributes] ||@default_node_config
+      @default_node_config = { shape: "box", style: "rounded", peripheries: 1 }
+      @node_attributes = options[:node_attributes] || @default_node_config
       # @edge_attributes = options[:edge_attributes] || nil
 
       @show_path = options.fetch(:show_path, false)
@@ -35,8 +30,9 @@ module VistualCall
       @call_tree_root = nil
       @call_tree_hashmap = nil
 
-      @cache_nodes = []
-      @cache_edges = []
+      @label_hashmap = {}
+      @cache_graph_nodes = []
+      @cache_graph_edges = []
     end
 
     def get_call_tree_root
@@ -51,36 +47,52 @@ module VistualCall
       @tracer.track(&block)
     end
 
-    def collect_nodes_and_edges(node)
+    def get_graph_node_id(node)
+      label_name = node.method_name
+      if !@label_hashmap.key?(label_name)
+        @label_hashmap[label_name] = node.node_id
+      end
+      return @label_hashmap[label_name]
+    end
+
+    def build_nodes_and_edges(node)
       return if node == nil
 
-      @cache_nodes.push(node.node_id)
+      graph_node_id = get_graph_node_id(node)
+      @cache_graph_nodes.push(graph_node_id)
+
       if node.parent_node_id
-        @cache_edges.push([node.parent_node_id, node.node_id])
+        parent_node = @call_tree_hashmap[node.parent_node_id]
+        parent_graph_node_id = get_graph_node_id(parent_node)
+        @cache_graph_edges.push([parent_graph_node_id, graph_node_id])
       end
 
       if node.children.size > 0
         node.children.each do |one_child_node|
-          collect_nodes_and_edges(one_child_node)
+          build_nodes_and_edges(one_child_node)
         end
       end
     end
 
     def get_dot_config_string(hashmap)
-      config = hashmap.keys.map {|key| "#{key}=\"#{hashmap[key]}\""}.join(',')
+      config = hashmap.keys.map { |key| "#{key}=\"#{hashmap[key]}\"" }.join(",")
       return "[#{config}]"
     end
 
     def dot_node_format(node_id)
       if node_id == StartNodeID
-        config = { label: "Start"}
-        return "node#{node_id}#{get_dot_config_string(config.merge(@default_node_config))}"
+        config = { label: "Start" }
+        return(
+          "node#{node_id}#{get_dot_config_string(config.merge(@default_node_config))}"
+        )
       end
 
       node = @call_tree_hashmap[node_id]
-      config = { label: "#{node.defined_class}##{node.method_id}"}
+      config = { label: "#{node.defined_class}##{node.method_id}" }
 
-      return "node#{node_id}#{get_dot_config_string(config.merge(@default_node_config))}"
+      return(
+        "node#{node_id}#{get_dot_config_string(config.merge(@default_node_config))}"
+      )
     end
 
     def dot_edge_format(edge)
@@ -89,7 +101,6 @@ module VistualCall
     end
 
     def gen_node_config
-
     end
 
     def generate_dot_template
@@ -99,9 +110,9 @@ digraph "virtual_call_graph"{
   node #{get_dot_config_string(@global_node_attributes)};
   edge #{get_dot_config_string(@global_edge_attributes)};
 
-#{@cache_nodes.map { |node_id| "\t" + dot_node_format(node_id) }.join("\n")}
+#{@cache_graph_nodes.map { |node_id| "\t" + dot_node_format(node_id) }.join("\n")}
 
-#{@cache_edges.map { |edge| "\t" + dot_edge_format(edge) }.join("\n")}
+#{@cache_graph_edges.map { |edge| "\t" + dot_edge_format(edge) }.join("\n")}
 }
 DOT
 
@@ -120,7 +131,7 @@ DOT
     def output
       get_call_tree_root()
       get_call_tree_hashmap()
-      collect_nodes_and_edges(@call_tree_root)
+      build_nodes_and_edges(@call_tree_root)
       content = generate_dot_template()
       dot_file_path = create_dot_file(content)
       system("cat #{dot_file_path}") if @show_dot

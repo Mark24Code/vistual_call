@@ -1,4 +1,4 @@
-require_relative '../lib/vistual_call'
+require_relative "../lib/vistual_call"
 
 def c
 end
@@ -11,5 +11,6 @@ def a
 end
 
 VistualCall.trace(show_dot: true, show_path: true) do
+  a
   a
 end
