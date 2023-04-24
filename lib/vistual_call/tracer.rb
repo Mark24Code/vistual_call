@@ -9,7 +9,7 @@ module VistualCall
 
       @trace_point =
         TracePoint.new(*@events) do |tp|
-          # TODO: stop
+          # TODO: stop & disable situations
           @call_tree.send("dispatch_#{tp.event}", tp)
         end
     end
