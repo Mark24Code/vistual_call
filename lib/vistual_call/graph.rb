@@ -7,13 +7,16 @@ module VistualCall
   # Output config
   DEFAULT_OUTPUT_FORMAT = "png"
   DEFAULT_OUTPUT = "vistual_call_result.png"
-  DEFAULT_OUTPUT_PATH = "#{Dir.pwd}/#{DEFAULT_OUTPUT}"
+  DEFAULT_OUTPUT_PATH = File.join(Dir.home, DEFAULT_OUTPUT)
 
   # Jump Node
   DEFAULT_JUMP_NODE = %w[Kernel#class Kernel#frozen?]
 
   # Hightlight Label
   HIGHT_LIGHT_REGEX = /method_missing/
+
+  # Core
+  DIRECTIONS = %w[TB LR BT RL]
 
   class Graph
     @@custer_count = 0
@@ -24,8 +27,15 @@ module VistualCall
     end
 
     def initialize(options = {})
+      @title = options[:title]
+      @labelloc = options[:labelloc] || "top"
+      @labeljust = options[:labeljust] || "center"
+      @margin = options[:margin] || "5"
       # display config
-      @direction = options.fetch(:direction, "LR")
+      @direction = options.fetch(:direction, :LR).to_s
+      if !DIRECTIONS.include?(@direction)
+        raise VistualCallError("direction must in #{DIRECTIONS}")
+      end
       @format = options.fetch(:format, DEFAULT_OUTPUT_FORMAT)
       @output = options.fetch(:output, DEFAULT_OUTPUT_PATH)
 
@@ -38,11 +48,11 @@ module VistualCall
       @heightlight_match = options.fetch(:heightlight_match, HIGHT_LIGHT_REGEX)
 
       # theme
+      @theme_name = options.fetch(:theme, :sky).to_s
       @theme_config =
         YAML.load_file(File.join(self.class.root, "theme.yml"), aliases: true)
-      @theme = @theme_config[@theme_config["use_theme"]]
-      @global_node_attrs = @theme["global_node_attrs"]
-      @global_edge_attrs = @theme["global_edge_attrs"]
+      @theme =
+        @theme_config[@theme_name] || @theme_config[@theme_config["use_theme"]]
       @node_attrs = @theme["node_attrs"]
       @edge_attrs = @theme["edge_attrs"]
       @node_waring_attrs = @theme["node_warn_attrs"]
@@ -160,12 +170,25 @@ module VistualCall
     def generate_cluster(module_name, graph_ids)
       @@custer_count += 1
 
+      cluster_style_config = @theme.dig("cluster", "style") || nil
+      cluster_style_config_text =
+        cluster_style_config && "style=\"#{cluster_style_config}\";"
+
+      cluster_color_config = @theme.dig("cluster", "color") || nil
+      cluster_color_config_text =
+        cluster_color_config && "color=\"#{cluster_color_config}\";"
+
+      cluster_node_config = @theme.dig("cluster_node") || nil
+      cluster_node_config_text =
+        cluster_node_config &&
+          "node=#{get_dot_config_string(cluster_node_config)};"
+
       template = <<-CLUSTER
   subgraph cluster_#{@@custer_count} {
-    label = "#{module_name}";
-    style="#{@theme["cluster"]["style"]}";
-    color="#{@theme["cluster"]["color"]}";
-    node #{get_dot_config_string(@theme["cluster_node"])};
+    label="#{module_name}";
+    #{cluster_style_config_text}
+    #{cluster_color_config_text}
+    #{cluster_node_config_text}
 
     #{graph_ids.map { |graph_node_id| generate_node_text(graph_node_id) }.join("")}
 }
@@ -174,7 +197,7 @@ module VistualCall
       return template
     end
 
-    def generate_nodes_and_clusters()
+    def render_nodes_and_clusters()
       content = ""
       @cluster_group.keys.each do |key|
         if key == "_single"
@@ -199,21 +222,44 @@ module VistualCall
       return("node#{parent_id} -> node#{child_id}")
     end
 
-    def generate_edges
-      @cache_graph_edges.map { |edge| "\t" + dot_edge_format(edge) }.join("\n")
+    def render_edges
+      @cache_graph_edges.map { |edge| dot_edge_format(edge) }.join("\n")
     end
 
+    def render_graph_config
+      @theme.dig("graph") &&
+        "graph #{get_dot_config_string(@theme.dig("graph"))}"
+    end
+
+    def render_node_config
+      @node_attrs && "node #{get_dot_config_string(@node_attrs)};"
+    end
+
+    def render_edge_config
+      @edge_attrs && "edge #{get_dot_config_string(@edge_attrs)};"
+    end
+
+    def render_meta_info
+      meta_info = ["rankdir=#{@direction};"]
+      meta_info << "margin=#{@margin};" if @margin
+      meta_info << "label=\"#{@title}\";" if @title
+      meta_info << "labelloc=\"#{@labelloc}\";" if @labelloc
+      meta_info << "labeljust=\"#{@labeljust}\";" if @labeljust
+
+      meta_info.join("\n")
+    end
     def generate_dot_template
       dot_template = <<-DOT
 digraph "virtual_call_graph"{
-  rankdir = #{@direction};
-  graph #{get_dot_config_string(@theme["graph"])}
-  node #{get_dot_config_string(@global_node_attrs)};
-  edge #{get_dot_config_string(@global_edge_attrs)};
 
-  #{generate_nodes_and_clusters}
+#{render_meta_info}
+#{render_graph_config}
+#{render_node_config}
+#{render_edge_config}
 
-  #{generate_edges}
+#{render_nodes_and_clusters}
+
+#{render_edges}
 
 }
 DOT

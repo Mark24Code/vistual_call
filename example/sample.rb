@@ -1,16 +1,16 @@
 require_relative "../lib/vistual_call"
 
-def c
+def call_c
 end
 
-def b
-  c
-end
-def a
-  b
+def call_b
+  call_c
 end
 
-VistualCall.trace(show_dot: true, show_path: true) do
-  a
-  a
+def call_a
+  call_b
+end
+
+VistualCall.trace(title: "Hellow", show_dot: true) do
+  call_a # enter call
 end

@@ -4,7 +4,7 @@ require_relative "vistual_call/version"
 require_relative "./vistual_call/graph"
 
 module VistualCall
-  class Error < StandardError
+  class VistualCallError < StandardError
   end
 
   class << self

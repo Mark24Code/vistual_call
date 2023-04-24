@@ -1,14 +1,28 @@
 # VistualCall
 
-## 1. Prepation
+VistualCall is a gem to help you trace your code and export beautiful vistual call graph.
 
-Need install [Graphviz](https://graphviz.org/) first.
+# Introduction
 
+## Dependency
 
-## 2. Example
+1. Graphviz
+
+You need to install [Graphviz](https://graphviz.org/) by yourself.
+
+Go to install [graphviz](https://graphviz.org/download/).
+
+## Usage
+
+### 1. Install gem
+
+`gem install vistual_call`
+
+### 2. Only the method needs to be wrapped.
+
 
 ```ruby
-require_relative '../lib/vistual_call'
+require 'vistual_call'
 
 def call_c
 end
@@ -22,11 +36,33 @@ def call_a
 end
 
 VistualCall.trace do
-  call_a
+  call_a # enter call
 end
 ```
 
-![vistual_call_result](./example/vistual_call_result.png)
+![example](./example/example.png)
+
+The method after each node is call order number. This will help your understand the order of the function call.
+
+## 3. More information
+
+## configuration
+
+```ruby
+# you can pass options
+VistualCall.trace(options) do
+  # run your code here...
+end
+```
+
+Options:
+
+| name | type |required|explain | example |
+| ---- | ---- | ---- | ---- |
+| direction | symbol| false  | 绘制方向，依次是 :TB(从上到下)，:LR(从左到右),:BT(从下到上),:RL(从右到左) | :TB :LR :BT :RL |
+| format | string | false  | 输出图片格式，查看 [graphviz 支持输出格式](https://graphviz.org/docs/outputs/)  |  默认 'png' |
+|output | string | false | 导出图片绝对路径 | 默认家目录下 `vistual_call_result.png` |
+|theme | symbol | false | 配色主题 :sky, :lemon | 默认 :sky |
 
 
 ## LICENSE

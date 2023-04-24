@@ -1,73 +1,79 @@
-# setting
-use_theme: "wind"
+# Setting your theme
+use_theme: "sky"
 
 
-# theme list
+# Theme basic settings
+basic_node: &basic_node
+  fontname: "wqy-microhei"
+  shape: "box"
+  peripheries: 1
+  style: "rounded, filled"
 
+# Theme list
 lemon:
-  basic: &lemon_basic
-    fontname: "wqy-microhei"
+  name: "柠檬黄主题"
 
+  # 说明
+  # color 非填充是边框色、填充就是节点背景色
+  # fontcolor 是文字颜色
+
+  # 画布属性
   graph:
     bgcolor: "#eff1f3" # 全局背景
 
-  # 全局节点
-  # color 非填充是边框色、填充就是节点背景色
-  # fontcolor 是文字颜色
-  global_node_attrs: &lemon_node
-    <<: *lemon_basic
-    shape: "box"
-    peripheries: 1
-
-    style: "rounded, filled"
+  # 节点
+  node_attrs: &lemon_node
+    <<: *basic_node
     color: "#696773"
     fontcolor: "#fcfcfc"
 
-  global_edge_attrs:
-    color: "#696773"
-
+  # 高亮节点
   node_warn_attrs:
-    <<: *lemon_node
+    <<: *basic_node
     fontcolor: "#ffffff"
     color: "#f19b97"
 
+  # 边
+  edge_attrs:
+    color: "#696773"
+
+  # 子图容器
   cluster:
     style: "filled"
     color: "#e3efd7"
 
+  # 子图节点
   cluster_node:
     color: "#f4b184"
     fontcolor: "#ffffff"
 
 
-wind:
-  basic: &wind_basic
-    fontname: "wqy-microhei"
+sky:
+  name: "天真蓝主题"
 
+  # 说明
+  # color 非填充是边框色、填充就是节点背景色
+  # fontcolor 是文字颜色
+
+  # 画布背景
   graph:
     bgcolor: "#ffffff" # 全局背景
 
-  # 全局节点
-  # color 非填充是边框色、填充就是节点背景色
-  # fontcolor 是文字颜色
-  global_node_attrs: &wind_node
-    <<: *wind_basic
-    shape: "box"
-    peripheries: 1
-
-    style: "rounded, filled"
+  # 节点
+  node_attrs:
+    <<: *basic_node
     color: "#deeaf6"
     fontcolor: "#000000"
 
-  # 箭头
-  global_edge_attrs:
-    color: "#021d57"
-
-  # 差异性节点（自定义的）
+  # 高亮节点
   node_warn_attrs:
-    <<: *wind_node
+    <<: *basic_node
     fontcolor: "#000000"
     color: "#ffda65"
+
+  # 边
+  edge_attrs:
+    color: "#021d57"
 
   # 子图
   cluster:
