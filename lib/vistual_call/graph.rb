@@ -29,7 +29,7 @@ module VistualCall
     end
 
     def initialize(options = {})
-      @label = options.fetch(:label)
+      @label = options.fetch(:label, nil)
       @labelloc = options.fetch(:labelloc, :top).to_s
       if !LABEL_LOC.include?(@labelloc)
         raise VistualCallError("labelloc must in #{LABEL_LOC}")
@@ -45,7 +45,7 @@ module VistualCall
         raise VistualCallError("direction must in #{DIRECTIONS}")
       end
       @format = options.fetch(:format, DEFAULT_OUTPUT_FORMAT)
-      @output = options.fetch(:output, DEFAULT_OUTPUT_PATH)
+      @output = File.expand_path(options.fetch(:output, DEFAULT_OUTPUT_PATH))
 
       @show_dot = options.fetch(:show_dot, false)
       @show_order_number = options.fetch(:show_order_number, true)
@@ -188,7 +188,7 @@ module VistualCall
       cluster_node_config = @theme.dig("cluster_node") || nil
       cluster_node_config_text =
         cluster_node_config &&
-          "node=#{get_dot_config_string(cluster_node_config)};"
+          "node#{get_dot_config_string(cluster_node_config)};"
 
       template = <<-CLUSTER
   subgraph cluster_#{@@custer_count} {
