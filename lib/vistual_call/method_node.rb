@@ -21,6 +21,10 @@ module VistualCall
       @@instance_count
     end
 
+    def self.get_method_name(node_info)
+      "#{node_info.defined_class}##{node_info.method_id}"
+    end
+
     attr_accessor :node_id, :method_name, :parent_node_id, :children
     def initialize(method_info)
       @@instance_count += 1
@@ -32,12 +36,8 @@ module VistualCall
         instance_variable_set("@#{attr}", method_info.send(attr))
         self.class.send(:attr_accessor, attr)
       end
-      @method_name = get_method_name
+      @method_name = self.class.get_method_name(self)
       @children = []
-    end
-
-    def get_method_name
-      "#{@defined_class}##{@method_id}"
     end
 
     def add_child(child)

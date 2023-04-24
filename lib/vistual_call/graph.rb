@@ -28,8 +28,7 @@ module VistualCall
       @format = options.fetch(:format, "png")
       @output = options.fetch(:output, "#{Dir.pwd}/#{DEFAULT_OUTPUT}")
 
-      @stop_trace_methods = options.fetch(:stop_trace_methods, [])
-      @tracer = Tracer.new(stop_trace_methods: @stop_trace_methods)
+      @tracer = Tracer.new
 
       @call_tree_root = nil
       @call_tree_hashmap = nil
