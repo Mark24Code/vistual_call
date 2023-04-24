@@ -1,5 +1,6 @@
 require "set"
 require "tempfile"
+require "yaml"
 require_relative "./tracer"
 
 module VistualCall
@@ -7,13 +8,6 @@ module VistualCall
   DEFAULT_OUTPUT_FORMAT = "png"
   DEFAULT_OUTPUT = "vistual_call_result.png"
   DEFAULT_OUTPUT_PATH = "#{Dir.pwd}/#{DEFAULT_OUTPUT}"
-  # Attributes config
-  DEFAULT_CONFIG = { fontname: "wqy-microhei", fontcolor: "black" }
-  DEFAULT_NODE_CONFIG =
-    DEFAULT_CONFIG.merge({ shape: "box", style: "rounded", peripheries: 1 })
-  DEFAULT_NODE_WARNNING_CONFIG =
-    DEFAULT_NODE_CONFIG.merge({ style: "filled", fillcolor: "#DD4A68" })
-  DEFAULT_EDGE_CONFIG = {}
 
   # Jump Node
   DEFAULT_JUMP_NODE = %w[Kernel#class Kernel#frozen?]
@@ -24,6 +18,11 @@ module VistualCall
   class Graph
     @@custer_count = 0
     attr_accessor :call_tree_root
+
+    def self.root
+      File.expand_path("../../", __dir__)
+    end
+
     def initialize(options = {})
       # display config
       @direction = options.fetch(:direction, "LR")
@@ -38,11 +37,15 @@ module VistualCall
       @jump_list = options.fetch(:jump_list, DEFAULT_JUMP_NODE)
       @heightlight_match = options.fetch(:heightlight_match, HIGHT_LIGHT_REGEX)
 
-      # attributes config
-      @global_node_attrs = options[:global_node_attributes] || DEFAULT_CONFIG
-      @global_edge_attrs = options[:global_edge_attributes] || DEFAULT_CONFIG
-      @node_attributes = options[:node_attributes] || DEFAULT_NODE_CONFIG
-      @edge_attributes = options[:edge_attributes] || DEFAULT_EDGE_CONFIG
+      # theme
+      @theme =
+        YAML.load_file(File.join(self.class.root, "theme.yml"), aliases: true)
+
+      @global_node_attrs = @theme["global_node_attrs"]
+      @global_edge_attrs = @theme["global_edge_attrs"]
+      @node_attrs = @theme["node_default"]
+      @edge_attrs = @theme["edge_default"]
+      @node_waring_attrs = @theme["node_waring"]
 
       # working cache
       @tracer = Tracer.new
@@ -118,7 +121,8 @@ module VistualCall
       end
     end
 
-    def get_dot_config_string(hashmap)
+    def get_dot_config_string(hashmap = nil)
+      return if !hashmap
       config = hashmap.keys.map { |key| "#{key}=\"#{hashmap[key]}\"" }.join(",")
       return "[#{config}]"
     end
@@ -137,21 +141,17 @@ module VistualCall
 
     def dot_node_format(node_id)
       if node_id == StartNodeID
-        config = merge_config(DEFAULT_NODE_CONFIG, { label: "Start" })
+        config = merge_config(@node_attrs, { label: "Start" })
+        p "<<<<<"
+        p config
         return("node#{node_id}#{get_dot_config_string(config)}")
       end
 
       node = @call_tree_hashmap[node_id]
 
-      label_name =
-        config =
-          merge_config(DEFAULT_NODE_CONFIG, { label: get_label_text(node) })
-
-      config =
-        merge_config(
-          config,
-          DEFAULT_NODE_WARNNING_CONFIG
-        ) if @heightlight_match =~ node.method_name
+      config = merge_config(@node_attrs, { label: get_label_text(node) })
+      config = merge_config(config, @node_waring_attrs) if @heightlight_match =~
+        node.method_name
 
       return("node#{node_id}#{get_dot_config_string(config)}")
     end

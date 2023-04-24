@@ -1,0 +1,20 @@
+basic_config: &basic
+  fontname: "wqy-microhei"
+  fontcolor: "black"
+
+global_node_attrs:
+  <<: *basic
+
+global_edge_attrs:
+  <<: *basic
+
+node_default: &basic_node
+  <<: *basic
+  shape: "box"
+  style: "rounded"
+  peripheries: 1
+
+node_waring:
+  <<: *basic_node
+  style: "filled"
+  fillcolor: "#DD4A68"
