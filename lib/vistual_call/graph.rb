@@ -19,6 +19,8 @@ module VistualCall
         options[:global_edge_attributes] || @default_config
 
       @default_node_config = { shape: "box", style: "rounded", peripheries: 1 }
+      @warn_node_config = { style: "filled", fillcolor: "#DD4A68" }
+
       @node_attributes = options[:node_attributes] || @default_node_config
       # @edge_attributes = options[:edge_attributes] || nil
 
@@ -35,6 +37,9 @@ module VistualCall
       @label_hashmap = {}
       @cache_graph_nodes_set = Set.new
       @cache_graph_edges = []
+
+      @jump_list = %w[Kernel#class Kernel#frozen?]
+      @heightlight_method = /method_missing/
     end
 
     def get_call_tree_root
@@ -59,6 +64,7 @@ module VistualCall
 
     def collect_graph_nodes_edges(node)
       return if node == nil
+      return if @jump_list.include?(node.method_name)
 
       graph_node_id = get_graph_node_id(node)
 
@@ -88,7 +94,7 @@ module VistualCall
     def collect_group_cluster
       @cluster_group = {}
       @label_hashmap.keys.each do |label_name|
-        if label_name.count("#") == (1 || 0)
+        if label_name.count("::") == 0
           create_or_set(@cluster_group, "_single", @label_hashmap[label_name])
         else
           module_name = label_name.split("#")
@@ -114,10 +120,12 @@ module VistualCall
 
       node = @call_tree_hashmap[node_id]
       config = { label: "#{node.defined_class}##{node.method_id}" }
+      config = config.merge(@default_node_config)
 
-      return(
-        "node#{node_id}#{get_dot_config_string(config.merge(@default_node_config))}"
-      )
+      config = config.merge(@warn_node_config) if @heightlight_method =~
+        node.method_name
+
+      return("node#{node_id}#{get_dot_config_string(config)}")
     end
 
     def generate_node_text(graph_node_id)
@@ -142,6 +150,8 @@ module VistualCall
 
     def generate_nodes_and_clusters()
       content = ""
+      p "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+      p @cluster_group.keys.sort!
       @cluster_group.keys.each do |key|
         if key == "_single"
           graph_node_ids = @cluster_group[key]

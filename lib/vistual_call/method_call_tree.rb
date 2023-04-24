@@ -18,6 +18,7 @@ module VistualCall
     end
 
     def handle_event_call(method_info)
+      # Memo: 构建树的call、return 不应该被跳过、修改，来保持对应关系，可以还原起调用树。过滤工作应该在消费数据的层面
       node = MethodNode.new(method_info)
       node_id = node.node_id
       memo_it(node_id, node)
