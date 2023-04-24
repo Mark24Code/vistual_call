@@ -27,3 +27,8 @@ end
 ```
 
 ![vistual_call_result](./example/vistual_call_result.png)
+
+
+## LICENSE
+
+The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).

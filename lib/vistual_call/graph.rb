@@ -1,3 +1,4 @@
+require "set"
 require "tempfile"
 require_relative "./tracer"
 
@@ -31,7 +32,7 @@ module VistualCall
       @call_tree_hashmap = nil
 
       @label_hashmap = {}
-      @cache_graph_nodes = []
+      @cache_graph_nodes = Set.new
       @cache_graph_edges = []
     end
 
@@ -59,7 +60,7 @@ module VistualCall
       return if node == nil
 
       graph_node_id = get_graph_node_id(node)
-      @cache_graph_nodes.push(graph_node_id)
+      @cache_graph_nodes.add(graph_node_id)
 
       if node.parent_node_id
         parent_node = @call_tree_hashmap[node.parent_node_id]
