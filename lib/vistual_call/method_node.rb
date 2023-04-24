@@ -1,6 +1,7 @@
 module VistualCall
   StartNodeID = 1
-  class StartNode
+
+  class BasicNode
     attr_accessor :node_id, :method_name, :parent_node_id, :children
     def initialize(method_name = nil)
       @node_id = StartNodeID

@@ -7,7 +7,7 @@ module VistualCall
       @call_stack = []
       @memo = {}
 
-      root = StartNode.new
+      root = BasicNode.new
       @call_stack.push(root)
       memo_it(root.node_id, root)
     end
