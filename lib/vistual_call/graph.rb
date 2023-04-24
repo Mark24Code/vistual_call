@@ -5,6 +5,7 @@ require_relative "./tracer"
 module VistualCall
   DEFAULT_OUTPUT = "vistual_call_result.png"
   class Graph
+    @@custer_count = 0
     attr_accessor :call_tree_root
     def initialize(options = {})
       @show_dot = options[:show_dot] || false
@@ -32,7 +33,7 @@ module VistualCall
       @call_tree_hashmap = nil
 
       @label_hashmap = {}
-      @cache_graph_nodes = Set.new
+      @cache_graph_nodes_set = Set.new
       @cache_graph_edges = []
     end
 
@@ -56,21 +57,44 @@ module VistualCall
       return @label_hashmap[label_name]
     end
 
-    def build_nodes_and_edges(node)
+    def collect_graph_nodes_edges(node)
       return if node == nil
 
       graph_node_id = get_graph_node_id(node)
-      @cache_graph_nodes.add(graph_node_id)
 
+      # build node
+      @cache_graph_nodes_set.add(graph_node_id)
+
+      # buid edges
       if node.parent_node_id
         parent_node = @call_tree_hashmap[node.parent_node_id]
         parent_graph_node_id = get_graph_node_id(parent_node)
         @cache_graph_edges.push([parent_graph_node_id, graph_node_id])
       end
 
+      # Make recurse call
       if node.children.size > 0
         node.children.each do |one_child_node|
-          build_nodes_and_edges(one_child_node)
+          collect_graph_nodes_edges(one_child_node)
+        end
+      end
+    end
+
+    def create_or_set(obj, key, value)
+      obj[key] = [] if !obj.key?(key)
+      obj[key].push(value)
+    end
+
+    def collect_group_cluster
+      @cluster_group = {}
+      @label_hashmap.keys.each do |label_name|
+        if label_name.count("#") == (1 || 0)
+          create_or_set(@cluster_group, "_single", @label_hashmap[label_name])
+        else
+          module_name = label_name.split("#")
+          module_name.pop
+          module_name = module_name.join("#")
+          create_or_set(@cluster_group, module_name, @label_hashmap[label_name])
         end
       end
     end
@@ -96,9 +120,53 @@ module VistualCall
       )
     end
 
+    def generate_node_text(graph_node_id)
+      return dot_node_format(graph_node_id) + ";\n"
+    end
+
+    def generate_cluster(module_name, graph_ids)
+      @@custer_count += 1
+
+      template = <<-CLUSTER
+  subgraph cluster_#{@@custer_count} {
+    label = "#{module_name}";
+    style=filled;
+    color=lightgrey;
+
+    #{graph_ids.map { |graph_node_id| generate_node_text(graph_node_id) }.join("")}
+}
+    CLUSTER
+
+      return template
+    end
+
+    def generate_nodes_and_clusters()
+      content = ""
+      @cluster_group.keys.each do |key|
+        if key == "_single"
+          graph_node_ids = @cluster_group[key]
+
+          graph_node_ids.each do |graph_node_id|
+            content << generate_node_text(graph_node_id)
+          end
+        else
+          module_name = key
+          module_graph_node_ids = @cluster_group[key]
+
+          content << generate_cluster(module_name, module_graph_node_ids)
+        end
+      end
+
+      return content
+    end
+
     def dot_edge_format(edge)
       parent_id, child_id = edge
       return "node#{parent_id} -> node#{child_id}"
+    end
+
+    def generate_edges
+      @cache_graph_edges.map { |edge| "\t" + dot_edge_format(edge) }.join("\n")
     end
 
     def generate_dot_template
@@ -108,9 +176,10 @@ digraph "virtual_call_graph"{
   node #{get_dot_config_string(@global_node_attributes)};
   edge #{get_dot_config_string(@global_edge_attributes)};
 
-#{@cache_graph_nodes.map { |node_id| "\t" + dot_node_format(node_id) }.join("\n")}
+  #{generate_nodes_and_clusters}
 
-#{@cache_graph_edges.map { |edge| "\t" + dot_edge_format(edge) }.join("\n")}
+  #{generate_edges}
+
 }
 DOT
 
@@ -129,7 +198,9 @@ DOT
     def output
       get_call_tree_root()
       get_call_tree_hashmap()
-      build_nodes_and_edges(@call_tree_root)
+
+      collect_graph_nodes_edges(@call_tree_root)
+      collect_group_cluster()
       content = generate_dot_template()
       dot_file_path = create_dot_file(content)
       system("cat #{dot_file_path}") if @show_dot

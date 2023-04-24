@@ -1,5 +1,5 @@
 require "sinatra"
-require "vistual_call"
+require_relative "../lib/vistual_call"
 
 VistualCall.trace(show_dot: true) do
   get "/" do
