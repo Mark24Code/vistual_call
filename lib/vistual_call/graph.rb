@@ -101,9 +101,6 @@ module VistualCall
       return "node#{parent_id} -> node#{child_id}"
     end
 
-    def gen_node_config
-    end
-
     def generate_dot_template
       dot_template = <<-DOT
 digraph "virtual_call_graph"{
