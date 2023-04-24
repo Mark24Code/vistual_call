@@ -57,13 +57,19 @@ end
 
 Options:
 
-| name | type |required|explain | example |
-| ---- | ---- | ---- | ---- |
-| direction | symbol| false  | 绘制方向，依次是 :TB(从上到下)，:LR(从左到右),:BT(从下到上),:RL(从右到左) | :TB :LR :BT :RL |
-| format | string | false  | 输出图片格式，查看 [graphviz 支持输出格式](https://graphviz.org/docs/outputs/)  |  默认 'png' |
-|output | string | false | 导出图片绝对路径 | 默认家目录下 `vistual_call_result.png` |
-|theme | symbol | false | 配色主题 :sky, :lemon | 默认 :sky |
-
+| name | type | required | explain | example |
+| ---- | ---- | ---- | ---- | ---- |
+| label | string | true | 标题 | Hello |
+| labelloc | symbol | false | 标题位置:  :top :bottom :center | :top  |
+| labeljust | symbol | false | 标题对齐位置 :left, :center, :right | :center  |
+| direction | symbol| false  | 绘制方向，依次是 :TB(从上到下)，:LR(从左到右,默认方式),:BT(从下到上),:RL(从右到左) | :LR |
+| format | string | false  | 输出图片格式，查看 [graphviz 支持输出格式](https://graphviz.org/docs/outputs/) 'png'、'svg'  |  默认 'png' |
+| output | string | false | 导出图片绝对路径 | 默认家目录下 `vistual_call_result.png` |
+| theme | symbol | false | 配色主题 :sky, :lemon | 默认 :sky |
+| show_dot | boolean | false | 展示 dot 内容 | 默认 false |
+| show_order_number | boolean | false | 输出调用序号 | 默认 true |
+| jump_list | Array(string) | false | 跳过节点，默认 ["Kernel#class", "Kernel#frozen?"] | - |
+| heightlight_match | Regex | false | 默认高亮匹配 label， 默认 /method_missing/ | /method_missing/ |
 
 ## LICENSE
 

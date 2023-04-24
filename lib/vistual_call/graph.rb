@@ -17,6 +17,8 @@ module VistualCall
 
   # Core
   DIRECTIONS = %w[TB LR BT RL]
+  LABEL_LOC = %w[top bottom center]
+  LABEL_JUST = %w[left right center]
 
   class Graph
     @@custer_count = 0
@@ -27,9 +29,15 @@ module VistualCall
     end
 
     def initialize(options = {})
-      @title = options[:title]
-      @labelloc = options[:labelloc] || "top"
-      @labeljust = options[:labeljust] || "center"
+      @label = options.fetch(:label)
+      @labelloc = options.fetch(:labelloc, :top).to_s
+      if !LABEL_LOC.include?(@labelloc)
+        raise VistualCallError("labelloc must in #{LABEL_LOC}")
+      end
+      @labeljust = options.fetch(:labeljust, :center).to_s
+      if !LABEL_JUST.include?(@labeljust)
+        raise VistualCallError("labeljust must in #{LABEL_JUST}")
+      end
       @margin = options[:margin] || "5"
       # display config
       @direction = options.fetch(:direction, :LR).to_s
@@ -39,7 +47,6 @@ module VistualCall
       @format = options.fetch(:format, DEFAULT_OUTPUT_FORMAT)
       @output = options.fetch(:output, DEFAULT_OUTPUT_PATH)
 
-      @show_path = options.fetch(:show_path, false)
       @show_dot = options.fetch(:show_dot, false)
       @show_order_number = options.fetch(:show_order_number, true)
 
@@ -242,7 +249,7 @@ module VistualCall
     def render_meta_info
       meta_info = ["rankdir=#{@direction};"]
       meta_info << "margin=#{@margin};" if @margin
-      meta_info << "label=\"#{@title}\";" if @title
+      meta_info << "label=\"#{@label}\";" if @label
       meta_info << "labelloc=\"#{@labelloc}\";" if @labelloc
       meta_info << "labeljust=\"#{@labeljust}\";" if @labeljust
 
