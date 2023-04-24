@@ -31,7 +31,7 @@ module VistualCall
 
       @show_path = options.fetch(:show_path, false)
       @show_dot = options.fetch(:show_dot, false)
-      @show_order_number = options.fetch(:show_order_number, false)
+      @show_order_number = options.fetch(:show_order_number, true)
 
       # node graph config
       @jump_list = options.fetch(:jump_list, DEFAULT_JUMP_NODE)
@@ -141,15 +141,12 @@ module VistualCall
 
     def dot_node_format(node_id)
       if node_id == StartNodeID
-        config = merge_config(@node_attrs, { label: "Start" })
-        p "<<<<<"
-        p config
-        return("node#{node_id}#{get_dot_config_string(config)}")
+        return("node#{node_id}#{get_dot_config_string({ label: "Start" })}")
       end
 
       node = @call_tree_hashmap[node_id]
 
-      config = merge_config(@node_attrs, { label: get_label_text(node) })
+      config = { label: get_label_text(node) }
       config = merge_config(config, @node_waring_attrs) if @heightlight_match =~
         node.method_name
 
@@ -166,8 +163,9 @@ module VistualCall
       template = <<-CLUSTER
   subgraph cluster_#{@@custer_count} {
     label = "#{module_name}";
-    style=filled;
-    color=lightgrey;
+    style="#{@theme["cluster"]["style"]}";
+    color="#{@theme["cluster"]["color"]}";
+    node #{get_dot_config_string(@theme["cluster_node"])};
 
     #{graph_ids.map { |graph_node_id| generate_node_text(graph_node_id) }.join("")}
 }
@@ -198,7 +196,7 @@ module VistualCall
 
     def dot_edge_format(edge)
       parent_id, child_id = edge
-      return "node#{parent_id} -> node#{child_id}"
+      return("node#{parent_id} -> node#{child_id}")
     end
 
     def generate_edges
@@ -209,6 +207,7 @@ module VistualCall
       dot_template = <<-DOT
 digraph "virtual_call_graph"{
   rankdir = #{@direction};
+  graph #{get_dot_config_string(@theme["graph"])}
   node #{get_dot_config_string(@global_node_attrs)};
   edge #{get_dot_config_string(@global_edge_attrs)};
 
