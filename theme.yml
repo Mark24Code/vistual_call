@@ -1,20 +1,41 @@
-basic_config: &basic
+# setting
+use_theme: "graphivz"
+
+
+# basic
+basic: &basic
   fontname: "wqy-microhei"
   fontcolor: "black"
 
-global_node_attrs:
-  <<: *basic
 
-global_edge_attrs:
-  <<: *basic
-
-node_default: &basic_node
+node_basic: &node_basic
   <<: *basic
   shape: "box"
   style: "rounded"
   peripheries: 1
 
-node_waring:
-  <<: *basic_node
-  style: "filled"
-  fillcolor: "#DD4A68"
+
+# theme list
+
+graphivz:
+  global_node_attrs:
+    <<: *basic
+
+  global_edge_attrs:
+    <<: *basic
+
+  node_attrs: &graphivz_node
+    <<: *node_basic
+    shape: "box"
+    style: "rounded"
+    peripheries: 1
+
+  node_warn_attrs:
+    <<: *graphivz_node
+    style: "filled"
+    fillcolor: "#DD4A68"
+
+  edge_attrs:
+    <<: *basic
+
+

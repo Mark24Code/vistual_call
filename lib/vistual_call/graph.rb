@@ -38,14 +38,14 @@ module VistualCall
       @heightlight_match = options.fetch(:heightlight_match, HIGHT_LIGHT_REGEX)
 
       # theme
-      @theme =
+      @theme_config =
         YAML.load_file(File.join(self.class.root, "theme.yml"), aliases: true)
-
+      @theme = @theme_config[@theme_config["use_theme"]]
       @global_node_attrs = @theme["global_node_attrs"]
       @global_edge_attrs = @theme["global_edge_attrs"]
-      @node_attrs = @theme["node_default"]
-      @edge_attrs = @theme["edge_default"]
-      @node_waring_attrs = @theme["node_waring"]
+      @node_attrs = @theme["node_attrs"]
+      @edge_attrs = @theme["edge_attrs"]
+      @node_waring_attrs = @theme["node_warn_attrs"]
 
       # working cache
       @tracer = Tracer.new
