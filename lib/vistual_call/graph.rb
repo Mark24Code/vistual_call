@@ -3,31 +3,48 @@ require "tempfile"
 require_relative "./tracer"
 
 module VistualCall
+  # Output config
+  DEFAULT_OUTPUT_FORMAT = "png"
   DEFAULT_OUTPUT = "vistual_call_result.png"
+  DEFAULT_OUTPUT_PATH = "#{Dir.pwd}/#{DEFAULT_OUTPUT}"
+  # Attributes config
+  DEFAULT_CONFIG = { fontname: "wqy-microhei", fontcolor: "black" }
+  DEFAULT_NODE_CONFIG =
+    DEFAULT_CONFIG.merge({ shape: "box", style: "rounded", peripheries: 1 })
+  DEFAULT_NODE_WARNNING_CONFIG =
+    DEFAULT_NODE_CONFIG.merge({ style: "filled", fillcolor: "#DD4A68" })
+  DEFAULT_EDGE_CONFIG = {}
+
+  # Jump Node
+  DEFAULT_JUMP_NODE = %w[Kernel#class Kernel#frozen?]
+
+  # Hightlight Label
+  HIGHT_LIGHT_REGEX = /method_missing/
+
   class Graph
     @@custer_count = 0
     attr_accessor :call_tree_root
     def initialize(options = {})
-      @show_dot = options[:show_dot] || false
-      @direction = options[:direction] || "LR"
-
-      @default_config = { fontname: "wqy-microhei", fontcolor: "black" }
-
-      @global_node_attributes =
-        options[:global_node_attributes] || @default_config
-      @global_edge_attributes =
-        options[:global_edge_attributes] || @default_config
-
-      @default_node_config = { shape: "box", style: "rounded", peripheries: 1 }
-      @warn_node_config = { style: "filled", fillcolor: "#DD4A68" }
-
-      @node_attributes = options[:node_attributes] || @default_node_config
-      # @edge_attributes = options[:edge_attributes] || nil
+      # display config
+      @direction = options.fetch(:direction, "LR")
+      @format = options.fetch(:format, DEFAULT_OUTPUT_FORMAT)
+      @output = options.fetch(:output, DEFAULT_OUTPUT_PATH)
 
       @show_path = options.fetch(:show_path, false)
-      @format = options.fetch(:format, "png")
-      @output = options.fetch(:output, "#{Dir.pwd}/#{DEFAULT_OUTPUT}")
+      @show_dot = options.fetch(:show_dot, false)
+      @show_order_number = options.fetch(:show_order_number, false)
 
+      # node graph config
+      @jump_list = options.fetch(:jump_list, DEFAULT_JUMP_NODE)
+      @heightlight_match = options.fetch(:heightlight_match, HIGHT_LIGHT_REGEX)
+
+      # attributes config
+      @global_node_attrs = options[:global_node_attributes] || DEFAULT_CONFIG
+      @global_edge_attrs = options[:global_edge_attributes] || DEFAULT_CONFIG
+      @node_attributes = options[:node_attributes] || DEFAULT_NODE_CONFIG
+      @edge_attributes = options[:edge_attributes] || DEFAULT_EDGE_CONFIG
+
+      # working cache
       @tracer = Tracer.new
 
       @call_tree_root = nil
@@ -36,9 +53,6 @@ module VistualCall
       @label_hashmap = {}
       @cache_graph_nodes_set = Set.new
       @cache_graph_edges = []
-
-      @jump_list = %w[Kernel#class Kernel#frozen?]
-      @heightlight_method = /method_missing/
     end
 
     def get_call_tree_root
@@ -109,20 +123,35 @@ module VistualCall
       return "[#{config}]"
     end
 
+    def merge_config(*configs)
+      new_config = {}
+      configs.each { |conf| new_config = new_config.merge(conf) }
+      return new_config
+    end
+
+    def get_label_text(node)
+      result = "#{node.defined_class}##{node.method_id}"
+      result << " (#{node.node_id})" if @show_order_number
+      return result
+    end
+
     def dot_node_format(node_id)
       if node_id == StartNodeID
-        config = { label: "Start" }
-        return(
-          "node#{node_id}#{get_dot_config_string(config.merge(@default_node_config))}"
-        )
+        config = merge_config(DEFAULT_NODE_CONFIG, { label: "Start" })
+        return("node#{node_id}#{get_dot_config_string(config)}")
       end
 
       node = @call_tree_hashmap[node_id]
-      config = { label: "#{node.defined_class}##{node.method_id}" }
-      config = config.merge(@default_node_config)
 
-      config = config.merge(@warn_node_config) if @heightlight_method =~
-        node.method_name
+      label_name =
+        config =
+          merge_config(DEFAULT_NODE_CONFIG, { label: get_label_text(node) })
+
+      config =
+        merge_config(
+          config,
+          DEFAULT_NODE_WARNNING_CONFIG
+        ) if @heightlight_match =~ node.method_name
 
       return("node#{node_id}#{get_dot_config_string(config)}")
     end
@@ -149,8 +178,6 @@ module VistualCall
 
     def generate_nodes_and_clusters()
       content = ""
-      p "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-      p @cluster_group.keys.sort!
       @cluster_group.keys.each do |key|
         if key == "_single"
           graph_node_ids = @cluster_group[key]
@@ -182,8 +209,8 @@ module VistualCall
       dot_template = <<-DOT
 digraph "virtual_call_graph"{
   rankdir = #{@direction};
-  node #{get_dot_config_string(@global_node_attributes)};
-  edge #{get_dot_config_string(@global_edge_attributes)};
+  node #{get_dot_config_string(@global_node_attrs)};
+  edge #{get_dot_config_string(@global_edge_attrs)};
 
   #{generate_nodes_and_clusters}
 
