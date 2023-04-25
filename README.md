@@ -40,7 +40,7 @@ VistualCall.trace do
 end
 ```
 
-![example](./example/example.png)
+![sample](./example/sample.png)
 
 The method after each node is call order number. This will help your understand the order of the function call.
 
