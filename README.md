@@ -75,7 +75,7 @@ VistualCall.trace(title: "Outer", show_dot: true) do
 end
 
 ```
-![Vistual Call](./example/vsitual_call_self.png)
+![Vistual Call](./example/vsitual_call_self.jpg)
 
 ## 3. More information
 
