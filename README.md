@@ -46,10 +46,35 @@ The method after each node is call order number. This will help your understand 
 
 #### Sinatra
 
+```ruby
+require "sinatra"
+require_relative "vistual_call"
+
+VistualCall.trace(theme: :lemon) do
+  get "/" do
+    "hello"
+  end
+end
+
+```
+
 ![sinatra](./example/sinatra.png)
 
 #### Vistual Call graph itself
 
+```ruby
+require_relative "vistual_call"
+
+def call_a
+end
+
+VistualCall.trace(title: "Outer", show_dot: true) do
+  VistualCall.trace(title: "Inner", show_dot: true) do
+    call_a # whatever
+  end
+end
+
+```
 ![Vistual Call](./example/vsitual_call_self.png)
 
 ## 3. More information
