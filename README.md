@@ -48,6 +48,10 @@ The method after each node is call order number. This will help your understand 
 
 ![sinatra](./example/sinatra.png)
 
+#### Vistual Call graph itself
+
+![Vistual Call](./example/vsitual_call_self.png)
+
 ## 3. More information
 
 ## configuration
